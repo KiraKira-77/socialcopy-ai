@@ -1,66 +1,88 @@
-# SocialCopy AI on Next.js + Deno / 社交文案 AI（Next.js + Deno）
+# SocialCopy AI · Next.js + Deno Deploy
+
+> Multilingual social copy, prompt templates, and Imagen workflows built with the Next.js App Router and designed for Deno Deploy. / 基于 Next.js App Router 的社交文案 & Imagen 工作流，原生适配 Deno Deploy。
+
+## Table of Contents / 目录
+1. [Overview / 项目概述](#overview--项目概述)
+2. [Feature Highlights / 核心功能](#feature-highlights--核心功能)
+3. [Architecture & Prerequisites / 架构与环境](#architecture--prerequisites--架构与环境)
+4. [Quick Start / 快速上手](#quick-start--快速上手)
+5. [Available Scripts / 常用脚本](#available-scripts--常用脚本)
+6. [API Key Management / 密钥管理](#api-key-management--密钥管理)
+7. [Deploying on Deno Deploy / 发布到 Deno Deploy](#deploying-on-deno-deploy--发布到-deno-deploy)
+8. [Troubleshooting / 常见问题](#troubleshooting--常见问题)
+9. [Contributing / 贡献指南](#contributing--贡献指南)
 
 ## Overview / 项目概述
-- **EN**: SocialCopy AI is a Next.js App Router experience tuned for Deno Deploy and powered by Google Gemini 2.5 plus Imagen 4.0. It ingests long-form copy, then returns multilingual, platform-aware snippets, quality scores, reusable prompt templates, and AI-generated visuals.
-
-- **中文**: SocialCopy AI 基于 Next.js App Router 构建，优化部署在 Deno Deploy，并接入 Google Gemini 2.5 与 Imagen 4.0。输入任意长文案即可获得多语言、多平台的成品文案、质量评分、可复用的 Prompt 模板以及 AI 配图。
+- **EN**: SocialCopy AI ingests long-form copy and returns multilingual, platform-aware snippets with readability/engagement/CTA scores, reusable prompt templates, and Imagen 4.0 image variants.
+- **中文**: 输入任意长文案，即可生成多语言、多平台的社交内容，附带可读性/互动性/CTA 评分、Prompt 模板，以及 Imagen 4.0 的 1:1、16:9、9:16 配图。
 
 ## Feature Highlights / 核心功能
-- **Multilingual & multi-mode output**  
-  - **EN**: Toggle between Simplified Chinese and English plus Social Copy, Summary, or Short-Video Script modes.  
-  - **中文**: 支持中英文切换，并可在社交文案、总结、短视频脚本等多种形态间切换。
+- **Multilingual + Multi-mode / 多语言多形态**  
+  EN: Toggle between Simplified Chinese and English plus Social / Summary / Short-Video modes.  
+  中文: 支持中英界面与文案，并可在社交贴文、摘要、短视频脚本等形态间快速切换。
+- **Prompt Workspace / Prompt 工作区**  
+  EN: Override prompts per platform, save templates, and persist them in `localStorage`.  
+  中文: 针对不同平台自定义 Prompt，保存/应用模板，数据均保存在浏览器本地。
+- **Quality Scoring / 质量评分**  
+  EN: Each output carries readability, engagement, CTA scores, and targeted suggestions.  
+  中文: 每条结果包含可读性、互动性、CTA 评分与改进建议。
+- **Imagen Workflow / Imagen 流程**  
+  EN: Generate English prompts, call Imagen 4.0 for 1:1 / 16:9 / 9:16 variants, preview, download, or copy Base64.  
+  中文: 自动生成英文配图提示，调用 Imagen 4.0 输出多种比例，可预览、下载 PNG 或复制 Base64。
+- **Draft Drawer / 草稿抽屉**  
+  EN: Save platform, tone, language, mode, and prompt overrides to resume later.  
+  中文: 草稿抽屉一次性保存平台、语气、语言、形态、Prompt，随时恢复继续编辑。
 
-- **Prompt control center**  
-  - **EN**: Edit per-platform prompts, save/apply templates, and persist them in `localStorage`.  
-  - **中文**: 为不同平台定制 Prompt，保存模板并即时应用，数据全部保存在 `localStorage`。
+## Architecture & Prerequisites / 架构与环境
+- **Stack**: Next.js App Router + React 19 + Tailwind CSS + Deno Deploy runtime.  
+- **AI Providers**: Google Gemini 2.5 (`gemini-2.5-flash-preview-09-2025`) & Imagen 4.0 (`imagen-4.0-generate-001`).  
+- **Storage**: Drafts, templates, and API keys persist in browser `localStorage`.  
+- **Requirements / 环境要求**: Deno 1.39+（推荐）或 Node.js 20+、Chromium 浏览器，以及具备上述模型权限的 Google Generative AI Key。
 
-- **Quality scoring**  
-  - **EN**: Every result carries readability, engagement, and CTA scores with suggestions.  
-  - **中文**: 每条结果附带可读性、互动性、CTA 评分与改进建议。
-
-- **Imagen-powered image workflow**  
-  - **EN**: Create English prompts, call Imagen 4.0 for 1:1 / 16:9 / 9:16 variants, preview, download PNG, or copy Base64.  
-  - **中文**: 自动生成英文描述，调用 Imagen 4.0 输出 1:1、16:9、9:16 多图，支持预览、下载 PNG 或复制 Base64。
-
-- **Draft management**  
-  - **EN**: Save platform, tone, language, mode, and prompt overrides via the “草稿工作流” drawer to resume later.  
-  - **中文**: “草稿工作流” 抽屉可保存输入全文、平台、语气、语言、形态及 Prompt 覆盖信息，随时恢复。
-
-## Prerequisites / 环境要求
-- **EN**: Deno 1.39+ (preferred) or Node.js 20+ for `npm` scripts; Google Generative AI key with `gemini-2.5-flash-preview-09-2025:generateContent` and `imagen-4.0-generate-001:predict` access; a Chromium-based browser for DevTools logging.  
-- **中文**: 准备 Deno 1.39+（推荐）或 Node.js 20+、可调用 `gemini-2.5-flash-preview-09-2025:generateContent` 与 `imagen-4.0-generate-001:predict` 的 Google Generative AI Key，以及可查看 DevTools 日志的 Chromium 浏览器。
-
-## Setup / 项目初始化
-
+## Quick Start / 快速上手
 ```bash
-npm install          # install dependencies / 安装依赖
-export GEMINI_API_KEY="<your-key>"   # optional env var / 可将 Key 写入环境变量
+git clone https://github.com/<you>/socialcopy-ai.git
+cd socialcopy-ai
+npm install
+npm run dev   # or deno task dev
 ```
 
-- **EN**: The demo keeps the API key inline for convenience; move it to env vars or a proxy before production.  
-- **中文**: Demo 中为方便演示将 Key 写在代码里，上线前请改成环境变量或服务端代理。
-- **EN**: Both `/api/ai/generate-copy` and `/api/ai/generate-image` read `GEMINI_API_KEY`, so make sure it is available in `.env.local`, shell exports, or your Deno Deploy project.  
-- **中文**: `/api/ai/generate-copy` 与 `/api/ai/generate-image` 都依赖 `GEMINI_API_KEY`，开发/部署时请在 `.env.local`、shell 变量或 Deno Deploy 配置里提供。
+- **API key**: 创建 `.env.local` 并写入 `GEMINI_API_KEY=...`，或在前端的 “Settings → API key” 页面粘贴个人密钥（仅保存在浏览器）。  
+- **访问**: 打开 `http://localhost:3000` 并留意 `[Gemini]` / `[Imagen]` 控制台日志，便于调试 Prompt 与时延。
 
-## Development & Debugging / 开发与调试
+## Available Scripts / 常用脚本
+| Command | 说明 / Description |
+| --- | --- |
+| `npm run dev` / `deno task dev` | 启动开发模式（Next.js + Fast Refresh）。 |
+| `npm run lint` | 运行 `next lint`，保证 ESLint + TypeScript 规则。 |
+| `npm run build` | 在 Node 环境构建生产包。 |
+| `deno task build` | 通过 Deno CLI 调用 `next build`（用于 Deno Deploy）。 |
+| `deno task start` / `npm run start` | 启动生产服务器。 |
 
-```bash
-npm run dev          # or deno task dev
-npm run lint         # wraps next lint
-npm run build        # deno task build for production
-```
-
-- **EN**: Open `http://localhost:3000`, keep DevTools visible, and watch `[Gemini]` / `[Imagen]` console logs for every request/response when tuning prompts or latency.  
-- **中文**: 打开 `http://localhost:3000`，保持 DevTools 常开，关注控制台中的 `[Gemini]` / `[Imagen]` 日志以便调试 Prompt 与时延。
+## API Key Management / 密钥管理
+1. **Server env**: 在 `.env.local`、Shell 或 Deno Deploy 环境变量里填入 `GEMINI_API_KEY`。  
+2. **Client override**: 访问 `/settings/api-key` 粘贴密钥，保存在 `localStorage`，所有 `/api/ai/*` 请求会优先使用该 Key，留空则回退服务器变量。  
+3. **安全提示**: 浏览器储存仅适用于个人 Demo，生产环境仍推荐后端代理或安全存储。
 
 ## Deploying on Deno Deploy / 发布到 Deno Deploy
-1. **EN**: Push your fork (strip local secrets). **中文**: 将分支推送到 GitHub 并清理本地密钥。  
-2. **EN**: In [Deno Deploy](https://dash.deno.com/) choose New Project → Deploy from GitHub. **中文**: 在 Deno Deploy 控制台选择 “New Project → Deploy from GitHub”。  
-3. **EN**: Select this repo, set command to `deno task start`, and add env vars such as `GEMINI_API_KEY`. **中文**: 选择仓库后把启动命令设为 `deno task start`，并配置 `GEMINI_API_KEY` 等环境变量。  
-4. **EN**: Trigger deployment; Deno Deploy builds the Next.js app globally. **中文**: 触发构建，Deno Deploy 将自动产出并分发生产版本。
+1. **Install 命令**：`deno install --allow-scripts=npm:sharp,npm:unrs-resolver`（授权必要 npm 脚本）。  
+2. **Build 命令**：  
+   - 若已开通 *Node compatibility*：`npm run build`（耗时短且稳定）。  
+   - 否则继续使用：`deno task build`。  
+3. **Run 命令**：`deno task start`（或 `npm run start`）。  
+4. **Env vars**：添加 `GEMINI_API_KEY` 等密钥。  
+5. **Tips**：Queue 阶段失败通常与未启用 Node build 或平台拥堵有关；`exit code 139` 是 Deno Node 兼容层已知问题，切换到 Node build 可规避。
+
+## Troubleshooting / 常见问题
+- **Queue Failed**: 确认 Deno 状态页无异常，并检查是否启用了 Node build。  
+- **Build exit code 139**: Deno 的 Node 兼容层在 `next build` 时崩溃，优先使用 Node 构建流程。  
+- **Lint Warning about `<img>`**: Next.js `@next/next/no-img-element` 默认提示，可换成 `next/image` 或按需在 ESLint 中忽略。  
+- **API Key Missing**: `/api` 返回 `GEMINI_API_KEY 未配置` 时，确保 `.env.local` 或设置页已经保存密钥。
 
 ## Contributing / 贡献指南
-- **EN**: Read `AGENTS.md` for file structure, coding style, AI workflow, and PR etiquette. Run `npm run lint`, `npx jest --runInBand`, and relevant `deno test` commands before committing. Document any Prompt/Draft schema adjustments, attach screenshots or Loom demos for new flows, report `[Gemini]` / `[Imagen]` console anomalies, and ensure `deno task build` passes before requesting review.  
-- **中文**: 贡献前请阅读 `AGENTS.md` 了解目录结构、编码规范与 AI 工作流；提交前务必通过 `npm run lint`、`npx jest --runInBand` 及相关 `deno test`。若修改 Prompt/Draft 结构需在 PR 中说明，并附上截图或 Loom 演示，记录 `[Gemini]` / `[Imagen]` 异常日志，且确保 `deno task build` 成功后再发起 Review。
+- 阅读 [`AGENTS.md`](AGENTS.md) 了解文件结构、编码规范、AI 流程与 PR 要求。  
+- 提交前务必运行 `npm run lint`、`npx jest --runInBand`、`deno test --allow-read --allow-env`（如适用），并确认 `npm run build` / `deno task build` 通过。  
+- Prompt / Draft schema 变更需在 PR 中记录迁移策略、附截图或 Loom，并同步任何 `[Gemini]` / `[Imagen]` 控制台异常。
 
 Let’s keep SocialCopy AI delightful for contributors and creators! / 期待与你一起让 SocialCopy AI 更加出色！

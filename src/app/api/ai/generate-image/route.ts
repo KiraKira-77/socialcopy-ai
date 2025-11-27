@@ -4,6 +4,7 @@ import { getRuntimeEnvVar } from "../../_lib/env";
 type GenerateImageRequest = {
   prompt: string;
   aspectRatio?: "1:1" | "16:9" | "9:16";
+  apiKey?: string;
 };
 
 const IMAGEN_API_URL =
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "请求体必须是合法的 JSON。" }, { status: 400 });
   }
 
-  const { prompt, aspectRatio = "1:1" } = payload ?? {};
+  const { prompt, aspectRatio = "1:1", apiKey: clientApiKey } = payload ?? {};
 
   if (!prompt || typeof prompt !== "string") {
     return NextResponse.json({ error: "缺少可用的配图提示。" }, { status: 400 });
@@ -34,11 +35,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "不支持的图片比例。" }, { status: 400 });
   }
 
-  const apiKey = getRuntimeEnvVar("GEMINI_API_KEY");
+  const normalizedApiKey =
+    typeof clientApiKey === "string" ? clientApiKey.trim() : "";
+  const apiKey = normalizedApiKey || getRuntimeEnvVar("GEMINI_API_KEY");
 
   if (!apiKey) {
     return NextResponse.json(
-      { error: "GEMINI_API_KEY 未配置，无法调用 Imagen 接口。" },
+      {
+        error:
+          "GEMINI_API_KEY 未配置，且请求体未提供 apiKey，无法调用 Imagen 接口。",
+      },
       { status: 500 },
     );
   }
@@ -86,4 +92,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
-

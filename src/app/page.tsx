@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
@@ -7,6 +8,7 @@ import {
   Clipboard,
   Download,
   Image as ImageIcon,
+  KeyRound,
   Laugh,
   Loader,
   Meh,
@@ -18,6 +20,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { API_KEY_STORAGE_KEY } from "./_lib/storage";
 
 type UiLanguage = "zh-CN" | "en-US";
 
@@ -32,7 +35,7 @@ type Platform = {
 
 type Tone = {
   id: string;
-  name: string;
+  labels: Record<UiLanguage, string>;
   icon: typeof Users;
   prompt: string;
 };
@@ -124,19 +127,19 @@ const PLATFORMS: Platform[] = [
 const TONES: Tone[] = [
   {
     id: "friendly",
-    name: "Friendly",
+    labels: { "zh-CN": "友好轻松", "en-US": "Friendly" },
     icon: Laugh,
     prompt: "语气友好、积极、贴近生活，适度加入 Emoji。",
   },
   {
     id: "professional",
-    name: "Professional",
+    labels: { "zh-CN": "专业正式", "en-US": "Professional" },
     icon: Monitor,
     prompt: "语气专业严谨，突出可信度和清晰结构。",
   },
   {
     id: "bold",
-    name: "Bold",
+    labels: { "zh-CN": "大胆犀利", "en-US": "Bold" },
     icon: Zap,
     prompt: "语气大胆直接，强调对读者的行动号召。",
   },
@@ -188,6 +191,7 @@ const createUiText = (language: UiLanguage) => {
     uiLanguageLabel: isEnglish ? "UI language" : "界面语言",
     promptSettingsButton: isEnglish ? "Prompt workspace" : "平台 Prompt 设置",
     draftsButton: isEnglish ? "Draft workflow" : "草稿工作流",
+    apiKeySettingsButton: isEnglish ? "API key settings" : "API 密钥设置",
     steps: {
       input: isEnglish ? "1. Provide source content" : "1. 输入原始内容",
       config: isEnglish ? "2. Configure targets" : "2. 配置目标平台",
@@ -630,6 +634,7 @@ export default function Home() {
   const [draftName, setDraftName] = useState("");
   const [isPromptSettingsOpen, setPromptSettingsOpen] = useState(false);
   const [isDraftsOpen, setDraftsOpen] = useState(false);
+  const [apiKey, setApiKey] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -662,6 +667,10 @@ export default function Home() {
       } catch {
         // ignore corrupted cache
       }
+    }
+    const storedApiKey = window.localStorage.getItem(API_KEY_STORAGE_KEY);
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
     }
   }, []);
 
@@ -718,6 +727,7 @@ export default function Home() {
     setLoading(true);
     setGenerationError(null);
     try {
+      const normalizedApiKey = apiKey.trim();
       const response = await fetch("/api/ai/generate-copy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -730,6 +740,7 @@ export default function Home() {
           tone: selectedTone,
           language: selectedLanguage,
           contentMode: selectedContentMode,
+          apiKey: normalizedApiKey || undefined,
         }),
       });
 
@@ -767,6 +778,7 @@ export default function Home() {
       setLoading(false);
     }
   }, [
+    apiKey,
     inputContent,
     isInputValid,
     loading,
@@ -783,10 +795,15 @@ export default function Home() {
       prompt: string,
       aspectRatio: "1:1" | "16:9" | "9:16",
     ) => {
+      const normalizedApiKey = apiKey.trim();
       const response = await fetch("/api/ai/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, aspectRatio }),
+        body: JSON.stringify({
+          prompt,
+          aspectRatio,
+          apiKey: normalizedApiKey || undefined,
+        }),
       });
 
       if (!response.ok) {
@@ -816,7 +833,7 @@ export default function Home() {
         ),
       );
     },
-    [],
+    [apiKey],
   );
 
   const handlePromptOverrideChange = useCallback(
@@ -952,7 +969,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="space-x-3">
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => setPromptSettingsOpen(true)}
@@ -969,6 +986,13 @@ export default function Home() {
               <BookmarkCheck size={14} />
               {uiText.draftsButton}
             </button>
+            <Link
+              href="/settings/api-key"
+              className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/20"
+            >
+              <KeyRound size={14} />
+              {uiText.apiKeySettingsButton}
+            </Link>
           </div>
 
           <div className="space-y-4 rounded-2xl border border-gray-800 bg-gray-900/40 p-5 shadow-inner shadow-black/20">
@@ -1037,7 +1061,7 @@ export default function Home() {
                     }`}
                   >
                     <tone.icon size={16} />
-                    <span>{tone.name}</span>
+                    <span>{tone.labels[uiLanguage]}</span>
                   </button>
                 ))}
               </div>

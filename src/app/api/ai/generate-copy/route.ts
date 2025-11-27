@@ -26,6 +26,7 @@ type GenerateCopyRequest = {
   tone: SerializableTone;
   language: Option;
   contentMode: Option;
+  apiKey?: string;
 };
 
 type GeminiResponse = {
@@ -113,7 +114,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "请求体必须是合法的 JSON。" }, { status: 400 });
   }
 
-  const { content, platform, tone, language, contentMode } = payload ?? {};
+  const { content, platform, tone, language, contentMode, apiKey: clientApiKey } =
+    payload ?? {};
 
   if (!content || typeof content !== "string" || !content.trim()) {
     return NextResponse.json({ error: "缺少有效的文案原始内容。" }, { status: 400 });
@@ -128,11 +130,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "平台、语气、语言或内容形态指令缺失。" }, { status: 400 });
   }
 
-  const apiKey = getRuntimeEnvVar("GEMINI_API_KEY");
+  const normalizedApiKey =
+    typeof clientApiKey === "string" ? clientApiKey.trim() : "";
+  const apiKey = normalizedApiKey || getRuntimeEnvVar("GEMINI_API_KEY");
 
   if (!apiKey) {
     return NextResponse.json(
-      { error: "GEMINI_API_KEY 未配置，无法调用 Gemini 接口。" },
+      {
+        error:
+          "GEMINI_API_KEY 未配置，且请求体未提供 apiKey，无法调用 Gemini 接口。",
+      },
       { status: 500 },
     );
   }
@@ -222,4 +229,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
-
