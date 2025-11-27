@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Dinosaur App",
-  description: "Run Next.js with Deno",
+  title: "SocialCopy AI",
+  description: "将长文内容转换为各大社媒平台可用的高质量文案",
 };
 
 export default function RootLayout({
@@ -12,11 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="stylesheet" href="https://demo-styles.deno.deno.net/styles.css" />
-      </head>
-      <body>
+    <html lang="zh-CN">
+      <body className="bg-gray-900 text-slate-100">
         {children}
       </body>
     </html>
