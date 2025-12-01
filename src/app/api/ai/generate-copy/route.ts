@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRuntimeEnvVar } from "../../_lib/env";
+import { fetchWithTimeout } from "../../_lib/fetchWithTimeout";
 
 type SerializablePlatform = {
   id: string;
@@ -41,6 +42,7 @@ type GeminiResponse = {
 
 const API_URL_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
+
 
 const systemInstructionText = `
 你是一位世界级的社交媒体文案专家和内容营销策略师。你的任务是将提供的长篇内容提炼、重写，并转换成 3 个独特的、高质量的社交媒体文案。核心规则：
@@ -160,16 +162,42 @@ export async function POST(request: Request) {
       responseSchema,
     },
   };
+  const requestLabel = "[Gemini] generate-copy";
+  const requestUrl = `${API_URL_BASE}?key=${apiKey}`;
+  const apiKeySource = normalizedApiKey ? "client" : "server-env";
+  console.log(requestLabel, "request:start", {
+    url: `${API_URL_BASE}?key=${apiKey ? `***${apiKey.slice(-4)}` : "(empty)"}`,
+    apiKeySource,
+    payloadPreview: {
+      contentChars: content.length,
+      platformId: platform.id,
+      toneId: tone.id,
+      languageId: language.id,
+      contentModeId: contentMode.id,
+    },
+  });
 
   try {
-    const response = await fetch(`${API_URL_BASE}?key=${apiKey}`, {
+    const startedAt = Date.now();
+    const response = await fetchWithTimeout(requestUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(geminiPayload),
     });
+    const durationMs = Date.now() - startedAt;
+    console.log(requestLabel, "response", {
+      status: response.status,
+      ok: response.ok,
+      durationMs,
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(requestLabel, "response:error", {
+        status: response.status,
+        durationMs,
+        bodySnippet: errorText.slice(0, 500),
+      });
       return NextResponse.json(
         { error: `Gemini API 请求失败: ${response.status} ${errorText}` },
         { status: response.status },
@@ -224,6 +252,15 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ items });
   } catch (error) {
+    console.error(requestLabel, "request:failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    if (error instanceof Error && error.name === "AbortError") {
+      return NextResponse.json(
+        { error: "Gemini API 请求超时，请稍后重试。" },
+        { status: 504 },
+      );
+    }
     const message =
       error instanceof Error ? error.message : "调用 Gemini 接口时发生未知错误。";
     return NextResponse.json({ error: message }, { status: 502 });

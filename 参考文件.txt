@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Clipboard, Send, Loader, Zap, Users, Monitor, Sparkles, Meh, Laugh, BookOpen, Image, Download, RefreshCw } from 'lucide-react';
+import { Clipboard, Send, Loader, Zap, Users, Monitor, Sparkles, Meh, Laugh, BookOpen, Image, Download, RefreshCw, Target } from 'lucide-react';
 
 // --- 全局配置与数据 ---
 
@@ -11,7 +11,7 @@ const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial
 // AI API 配置
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent';
 const IMAGEN_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict';
-const apiKey = ""; // API key will be provided by the Canvas environment
+const apiKey = "AIzaSyCjEmFuAAIbcUsy_kqeEklrb4YU97XP8GY"; // API key will be provided by the Canvas environment
 
 // 目标平台配置 (F-02, F-06, F-07) - 已集成 Prompt 策略
 const PLATFORMS = [
@@ -34,8 +34,13 @@ const TONES = [
  * 核心 AI 调用函数，负责构建 Prompt 和调用 Gemini API。
  * 实现了指数退避重试机制。
  */
-const generateCopyWithGemini = async (content, platform, tone, maxRetries = 3) => {
+const generateCopyWithGemini = async (content, platform, tone, audience, maxRetries = 3) => {
   const apiUrl = `${GEMINI_API_URL}?key=${apiKey}`;
+
+  // 根据 audience 参数构建动态的 System Instruction
+  const audienceInstruction = audience.trim() 
+    ? `特别注意：你现在正在为目标受众 **${audience.trim()}** 撰写文案。你必须使用适合该群体使用的语言、流行语和文化偏好。` 
+    : "如果用户没有指定目标受众，则使用通用的、专业的社交媒体风格。";
 
   // 1. 构建 System Instruction (通用规则)
   const systemInstructionText = `
@@ -47,6 +52,7 @@ const generateCopyWithGemini = async (content, platform, tone, maxRetries = 3) =
 3. 必须在每个文案中加入相关的 #Hashtags 或 @提及（如果适用）。
 4. 必须将输出格式化为 JSON 数组，包含 3 个独立的文案对象：{text: string, image_prompt: string}。
 5. 文案内容必须忠实于源内容的主旨。
+${audienceInstruction}
   `.trim();
 
   // 2. 构建 User Prompt (动态指令和内容)
@@ -420,6 +426,8 @@ export default function App() {
   const [inputContent, setInputContent] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState(PLATFORMS[0]);
   const [selectedTone, setSelectedTone] = useState(TONES[0]);
+  // 【新增状态】用于存储目标受众描述
+  const [targetAudience, setTargetAudience] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -444,8 +452,8 @@ export default function App() {
     setLoading(true);
     setResults([]);
     try {
-      // 调用实际的 Gemini API 函数
-      const generatedCopies = await generateCopyWithGemini(inputContent, selectedPlatform, selectedTone);
+      // 传递新的 targetAudience 参数
+      const generatedCopies = await generateCopyWithGemini(inputContent, selectedPlatform, selectedTone, targetAudience);
       setResults(generatedCopies);
     } catch (error) {
       console.error('AI generation failed:', error);
@@ -454,7 +462,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [inputContent, selectedPlatform, selectedTone, isInputValid, loading]);
+  }, [inputContent, selectedPlatform, selectedTone, targetAudience, isInputValid, loading]);
 
   // UI - 左侧：输入与配置面板
   const InputConfigPanel = useMemo(() => (
@@ -488,9 +496,23 @@ export default function App() {
       <h2 className="text-xl font-bold text-white border-b border-purple-500/50 pb-3 mt-4">
         2. 目标与风格配置
       </h2>
+      
+      {/* 【新增功能】目标受众输入 */}
+      <div className="space-y-3">
+        <label className="text-sm font-semibold text-gray-300 flex items-center">
+          <Target size={16} className="mr-2 text-red-400" /> 目标受众描述 (可选，但推荐)
+        </label>
+        <textarea
+          className="w-full p-3 h-20 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-red-500 focus:ring-red-500 resize-none"
+          placeholder="例如：20-30 岁的女性白领，关注旅行和健康生活；或：B2B 科技公司的 CEO。"
+          value={targetAudience}
+          onChange={(e) => setTargetAudience(e.target.value)}
+        />
+      </div>
+
 
       {/* F-02: 目标平台选择 */}
-      <div className="space-y-3">
+      <div className="space-y-3 pt-4">
         <label className="text-sm font-semibold text-gray-300">目标社交平台:</label>
         <div className="grid grid-cols-2 gap-4">
           {PLATFORMS.map((p) => (
@@ -546,7 +568,7 @@ export default function App() {
         )}
       </button>
     </div>
-  ), [inputContent, selectedPlatform, selectedTone, loading, isInputValid, charCount, handleGenerate]);
+  ), [inputContent, selectedPlatform, selectedTone, targetAudience, loading, isInputValid, charCount, handleGenerate]);
 
 
   // UI - 右侧：结果面板
