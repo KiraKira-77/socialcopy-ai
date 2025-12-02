@@ -11,7 +11,7 @@ const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial
 // AI API 配置
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent';
 const IMAGEN_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict';
-const apiKey = "AIzaSyCjEmFuAAIbcUsy_kqeEklrb4YU97XP8GY"; // API key will be provided by the Canvas environment
+const apiKey = ""; // API key will be provided by the Canvas environment
 
 // 目标平台配置 (F-02, F-06, F-07) - 已集成 Prompt 策略
 const PLATFORMS = [
